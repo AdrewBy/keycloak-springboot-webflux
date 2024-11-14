@@ -1,4 +1,4 @@
-package com.ustsinau.springsecuritykeycloackapi;
+package com.ustsinau.springsecuritykeycloakapi;
 
 import org.springframework.boot.test.context.TestConfiguration;
 

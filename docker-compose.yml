@@ -1,0 +1,48 @@
+#version: '4.34.3'
+#
+#services:
+#
+#  client-backend:
+#    image: spring-security-keycloack-api:1.0.0
+#    env_file:
+#      - docker-back.env
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    restart: always
+#    container_name: my-webflux-keycloak-app
+#    ports:
+#      - '8083:8083'
+#
+#    depends_on:
+#        - postgres
+#
+#  postgres:
+#    image: docker.io/bitnami/postgresql:16.4.0
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data
+#    environment:
+#      POSTGRES_DB: keycloak
+#      POSTGRES_USER: keycloak
+#      POSTGRES_PASSWORD: password
+#
+#  keycloak:
+#    image: docker.io/bitnami/keycloak:26.0.5
+#    environment:
+#      DB_VENDOR: POSTGRES
+#      DB_ADDR: postgres
+#      DB_DATABASE: keycloak
+#      DB_USER: keycloak
+#      DB_SCHEMA: public
+#      DB_PASSWORD: password
+#      KEYCLOAK_CREATE_ADMIN_USER: true
+##      KEYCLOAK_USER: admin
+##      KEYCLOAK_PASSWORD: admin
+#    ports:
+#      - 8081:8080
+#    depends_on:
+#      - postgres
+#
+#volumes:
+#  postgres_data:
+#    driver: local

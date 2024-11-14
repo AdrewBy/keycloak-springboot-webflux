@@ -4,10 +4,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class SpringSecurityKeycloackApiApplication {
+public class SpringSecurityKeycloakApiApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(SpringSecurityKeycloackApiApplication.class, args);
+        SpringApplication.run(SpringSecurityKeycloakApiApplication.class, args);
     }
 
 }
