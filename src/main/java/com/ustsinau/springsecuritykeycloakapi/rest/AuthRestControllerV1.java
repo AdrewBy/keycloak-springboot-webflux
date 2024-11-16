@@ -1,13 +1,18 @@
 package com.ustsinau.springsecuritykeycloakapi.rest;
 
 import com.ustsinau.springsecuritykeycloakapi.dto.RegisterRequest;
+import com.ustsinau.springsecuritykeycloakapi.exception.ConfirmPasswordException;
+import com.ustsinau.springsecuritykeycloakapi.exception.UserWithEmailAlreadyExistsException;
 import com.ustsinau.springsecuritykeycloakapi.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Slf4j
@@ -18,9 +23,8 @@ public class AuthRestControllerV1 {
 
     private final AuthService authService;
 
-
     @PostMapping("/registration")
-    public Mono<Map<String, String>> register(@RequestBody RegisterRequest request) {
+    public Mono<ResponseEntity<Map<String, Object>>> register(@RequestBody RegisterRequest request) {
 
         // Извлекаем параметры из DTO
         String email = request.getEmail();
@@ -29,25 +33,35 @@ public class AuthRestControllerV1 {
 
         // Проверяем совпадение паролей
         if (!password.equals(confirmPassword)) {
-            return Mono.error(new IllegalArgumentException("Passwords do not match"));
+            return Mono.error(new ConfirmPasswordException("Password confirmation does not match", "PASSWORD_NOT_MATCH"));
+
         }
 
         // Вызываем метод регистрации пользователя в Keycloak
         return authService.registerUser(email, password)
-                .map(response -> Map.of("message", "User registered successfully"))
-                .onErrorResume(e -> Mono.just(Map.of("error", "Registration failed: " + e.getMessage())));
+                .map(response -> {
+                    return ResponseEntity
+                            .status(HttpStatus.CREATED)
+                            .body(getResponseBody(response));
+
+                })
+                .onErrorResume(e ->
+                        Mono.error(new UserWithEmailAlreadyExistsException("Registration failed: User with this email already exists", "USER_DUPLICATE_EMAIL")));
     }
 
-
     @PostMapping("/login")
-    public Mono<Map<String, String>> login(@RequestBody RegisterRequest request) {
-
+    public Mono<ResponseEntity<Map<String, Object>>> login(@RequestBody RegisterRequest request) {
 
         String email = request.getEmail();
         String password = request.getPassword();
         log.info("Запрос на вход пользователя с email: {}", email);
 
         return authService.authenticateUser(email, password)
+                .map(response -> {
+                    return ResponseEntity
+                            .status(HttpStatus.OK)
+                            .body(getResponseBody(response));
+                })
                 .doOnError(e -> log.error("Ошибка при входе: {}", e.getMessage()));
     }
 
@@ -58,4 +72,12 @@ public class AuthRestControllerV1 {
         return authService.refreshToken(refreshToken);
     }
 
+    private Map<String, Object> getResponseBody(Map<String, String> response) {
+        Map<String, Object> responseMap = new LinkedHashMap<>();
+        responseMap.put("access_token", response.get("access_token"));
+        responseMap.put("expires_in", Integer.parseInt(response.get("expires_in")));
+        responseMap.put("refresh_token", response.get("refresh_token"));
+        responseMap.put("token_type", response.get("token_type"));
+        return responseMap;
+    }
 }

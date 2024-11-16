@@ -35,8 +35,8 @@ public class UserService {
                     userInfo.put("created_at", new Date((Long) response.get("createdTimestamp")).toInstant().toString());
 
                     // Получаем роли
-                    List<String> roles = extractRoles(response);
-                    userInfo.put("roles", roles);
+//                    List<String> roles = extractRoles(response);
+//                    userInfo.put("roles", roles);
 
                     return userInfo;
                 })

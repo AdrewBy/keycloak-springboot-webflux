@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -11,6 +13,7 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,33 +38,35 @@ public class AuthService {
     private String adminPassword;
 
     // Регистрация пользователя
-    public Mono<Void> registerUser(String email, String password) {
+    public Mono<Map<String, String>> registerUser(String email, String password) {
 
-    // Получаем токен администратора
-    return getAdminAccessToken()
-            .flatMap(token -> {
-                // Настройка данных для создания нового пользователя
-                Map<String, Object> userRequest = Map.of(
-                        "username", email,
-                        "email", email,
-                        "enabled", true,
-                        "credentials", List.of(Map.of(
-                                "type", "password",
-                                "value", password,
-                                "temporary", false
-                        ))
-                );
+        // Получаем токен администратора
+        return getAdminAccessToken()
+                .flatMap(token -> {
+                    // Настройка данных для создания нового пользователя
+                    Map<String, Object> userRequest = Map.of(
+                            "username", email,
+                            "email", email,
+                            "enabled", true,
+                            "credentials", List.of(Map.of(
+                                    "type", "password",
+                                    "value", password,
+                                    "temporary", false
+                            ))
+                    );
 
-                // Отправляем запрос на создание пользователя
-                return keycloakWebClient
-                        .post()
-                        .uri("/admin/realms/alchim/users")
-                        .header("Authorization", "Bearer " + token)
-                        .bodyValue(userRequest)
-                        .retrieve()
-                        .bodyToMono(Void.class);
-            });
-}
+                    // Отправляем запрос на создание пользователя
+                    return keycloakWebClient
+                            .post()
+                            .uri("/admin/realms/alchim/users")
+                            .header("Authorization", "Bearer " + token)
+                            .bodyValue(userRequest)
+                            .retrieve()
+                            .bodyToMono(Void.class) // Поскольку создание пользователя не возвращает токен, ожидаем пустой ответ
+                            .doOnSuccess(response -> log.info("Registration successful."))
+                            .then(Mono.defer(() -> authenticateUser(email, password))); // После регистрации аутентифицируем пользователя для получения токенов
+                });
+    }
 
     // Аутентификация пользователя
     public Mono<Map<String, String>> authenticateUser(String email, String password) {
@@ -79,7 +84,9 @@ public class AuthService {
                 .uri("/realms/alchim/protocol/openid-connect/token")
                 .body(BodyInserters.fromFormData(credentials))
                 .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {})
+                .bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {
+                })
+
                 .doOnSuccess(response -> log.info("Аутентификация успешна. Access Token получен"))
                 .doOnError(error -> log.error("Ошибка аутентификации: {}", error.getMessage()));
     }
@@ -100,7 +107,8 @@ public class AuthService {
                 .uri("/realms/alchim//protocol/openid-connect/token")
                 .body(BodyInserters.fromFormData(formData))
                 .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {})
+                .bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {
+                })
                 .doOnSuccess(response -> {
                     // Логируем успешный ответ
                     log.info("Токен успешно обновлен, получен новый токен: {}", response.get("access_token"));
