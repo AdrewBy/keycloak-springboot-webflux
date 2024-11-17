@@ -6,18 +6,18 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8080/realms/alchim
-          jwk-set-uri: http://localhost:8080/realms/alchim/protocol/openid-connect/certs
+          issuer-uri: http://localhost:8282/realms/alchim
+          jwk-set-uri: http://localhost:8282/realms/alchim/protocol/openid-connect/certs
       client:
         provider:
           keycloak:
-            issuer-uri: http://localhost:8080/realms/alchim
+            issuer-uri: http://localhost:8282/realms/alchim
             user-name-attribute: preferred_username
 
         registration:
           keycloak:
             client-id: reactive-springsecurity-client  #resource
-            client-secret: ${KEYCLOAK_CLIENT_SECRET}
+            client-secret: ${REALM_ALCHIM_CLIENT_SECRET}
 
             scope:
               - openid

@@ -44,9 +44,7 @@ public class AuthRestControllerV1 {
                             .status(HttpStatus.CREATED)
                             .body(getResponseBody(response));
 
-                })
-                .onErrorResume(e ->
-                        Mono.error(new UserWithEmailAlreadyExistsException("Registration failed: User with this email already exists", "USER_DUPLICATE_EMAIL")));
+                });
     }
 
     @PostMapping("/login")
@@ -62,7 +60,9 @@ public class AuthRestControllerV1 {
                             .status(HttpStatus.OK)
                             .body(getResponseBody(response));
                 })
-                .doOnError(e -> log.error("Ошибка при входе: {}", e.getMessage()));
+                .doOnSuccess(response -> log.info("Аутентификация успешна. Access Token получен"))
+                .doOnError(error -> log.error("Ошибка аутентификации: {}", error.getMessage()));
+
     }
 
     @PostMapping("/refresh-token")

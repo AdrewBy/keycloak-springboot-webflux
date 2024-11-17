@@ -1,5 +1,6 @@
 package com.ustsinau.springsecuritykeycloakapi.service;
 
+import com.ustsinau.springsecuritykeycloakapi.exception.UserWithEmailAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -64,6 +65,8 @@ public class AuthService {
                             .retrieve()
                             .bodyToMono(Void.class) // Поскольку создание пользователя не возвращает токен, ожидаем пустой ответ
                             .doOnSuccess(response -> log.info("Registration successful."))
+                            .onErrorResume(e ->
+                                    Mono.error(new UserWithEmailAlreadyExistsException("Registration failed: User with this email already exists", "USER_DUPLICATE_EMAIL")))
                             .then(Mono.defer(() -> authenticateUser(email, password))); // После регистрации аутентифицируем пользователя для получения токенов
                 });
     }
@@ -85,10 +88,7 @@ public class AuthService {
                 .body(BodyInserters.fromFormData(credentials))
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {
-                })
-
-                .doOnSuccess(response -> log.info("Аутентификация успешна. Access Token получен"))
-                .doOnError(error -> log.error("Ошибка аутентификации: {}", error.getMessage()));
+                });
     }
 
 

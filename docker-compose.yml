@@ -12,7 +12,7 @@
 #    restart: always
 #    container_name: my-webflux-keycloak-app
 #    ports:
-#      - '8083:8083'
+      - '8083:8083'
 #
 #    depends_on:
 #        - postgres
@@ -36,8 +36,8 @@
 #      DB_SCHEMA: public
 #      DB_PASSWORD: password
 #      KEYCLOAK_CREATE_ADMIN_USER: true
-##      KEYCLOAK_USER: admin
-##      KEYCLOAK_PASSWORD: admin
+#      KEYCLOAK_USER: admin
+#      KEYCLOAK_PASSWORD: admin
 #    ports:
 #      - 8081:8080
 #    depends_on:
