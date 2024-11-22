@@ -33,6 +33,13 @@ public class AppErrorAttributes extends DefaultErrorAttributes {
             var errorMap = createErrorMap((ApiException) error);
             errorList.add(errorMap);
 
+        } else if (error instanceof UserEmailOrPasswordException) {
+            status = HttpStatus.UNAUTHORIZED;
+            var errorMap = new LinkedHashMap<String, Object>();
+            errorMap.put("code", ((ApiException) error).getErrorCode());
+            errorMap.put("message", error.getMessage());
+            errorList.add(errorMap);
+
         } else if (error instanceof UserWithEmailAlreadyExistsException) {
             status = HttpStatus.CONFLICT;
             var errorMap = new LinkedHashMap<String, Object>();

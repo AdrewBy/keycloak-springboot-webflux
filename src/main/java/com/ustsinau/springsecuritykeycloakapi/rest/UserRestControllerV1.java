@@ -1,7 +1,6 @@
 package com.ustsinau.springsecuritykeycloakapi.rest;
 
 
-import com.ustsinau.springsecuritykeycloakapi.service.AuthService;
 import com.ustsinau.springsecuritykeycloakapi.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,9 +16,7 @@ import java.util.Map;
 @RequestMapping("/api/v1/users")
 public class UserRestControllerV1 {
 
-
     private final UserService userService;
-
 
     @GetMapping("/{id}")
     public Mono<Map<String, Object>> getUser(@PathVariable String id, @RequestHeader("Authorization") String authHeader) {

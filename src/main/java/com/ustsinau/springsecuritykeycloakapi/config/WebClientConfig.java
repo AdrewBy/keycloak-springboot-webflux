@@ -12,7 +12,8 @@ public class WebClientConfig {
     @Bean
     public WebClient keycloakWebClient(WebClient.Builder builder) {
         return builder
-                .baseUrl("http://localhost:8282")  // Replace with Keycloak server URL
+               .baseUrl("http://localhost:8283")
+                //       .baseUrl("http://keycloak:8080")  // Replace with Keycloak server URL
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }

@@ -2,7 +2,6 @@ package com.ustsinau.springsecuritykeycloakapi.rest;
 
 import com.ustsinau.springsecuritykeycloakapi.dto.RegisterRequest;
 import com.ustsinau.springsecuritykeycloakapi.exception.ConfirmPasswordException;
-import com.ustsinau.springsecuritykeycloakapi.exception.UserWithEmailAlreadyExistsException;
 import com.ustsinau.springsecuritykeycloakapi.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +38,8 @@ public class AuthRestControllerV1 {
 
         // Вызываем метод регистрации пользователя в Keycloak
         return authService.registerUser(email, password)
+                .then(Mono.defer(() -> authService.authenticateUser(email, password))) // После регистрации аутентифицируем пользователя для получения токенов
+                .doOnSuccess(response -> log.info("Authentication successful."))
                 .map(response -> {
                     return ResponseEntity
                             .status(HttpStatus.CREATED)
@@ -59,17 +60,19 @@ public class AuthRestControllerV1 {
                     return ResponseEntity
                             .status(HttpStatus.OK)
                             .body(getResponseBody(response));
-                })
-                .doOnSuccess(response -> log.info("Аутентификация успешна. Access Token получен"))
-                .doOnError(error -> log.error("Ошибка аутентификации: {}", error.getMessage()));
-
+                });
     }
 
     @PostMapping("/refresh-token")
-    public Mono<Map<String, String>> refreshToken(@RequestBody Map<String, String> request) {
+    public Mono<ResponseEntity<Map<String, Object>>> refreshToken(@RequestBody Map<String, String> request) {
         String refreshToken = request.get("refresh_token");
 
-        return authService.refreshToken(refreshToken);
+        return authService.refreshToken(refreshToken)
+                .map(response ->{
+                      return   ResponseEntity
+                        .status(HttpStatus.OK)
+                .body(getResponseBody(response));
+                });
     }
 
     private Map<String, Object> getResponseBody(Map<String, String> response) {

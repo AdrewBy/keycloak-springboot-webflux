@@ -1,12 +1,11 @@
 package com.ustsinau.springsecuritykeycloakapi.service;
 
+import com.ustsinau.springsecuritykeycloakapi.exception.UserEmailOrPasswordException;
 import com.ustsinau.springsecuritykeycloakapi.exception.UserWithEmailAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -14,7 +13,6 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,14 +30,10 @@ public class AuthService {
     @Value("${REALM_ALCHIM_CLIENT_SECRET}")
     private String clientSecret;
 
-    @Value("${REALM_MASTER_NAME}")
-    private String adminName;
 
-    @Value("${REALM_MASTER_PASSWORD}")
-    private String adminPassword;
 
     // Регистрация пользователя
-    public Mono<Map<String, String>> registerUser(String email, String password) {
+    public Mono<Void> registerUser(String email, String password) {
 
         // Получаем токен администратора
         return getAdminAccessToken()
@@ -67,7 +61,7 @@ public class AuthService {
                             .doOnSuccess(response -> log.info("Registration successful."))
                             .onErrorResume(e ->
                                     Mono.error(new UserWithEmailAlreadyExistsException("Registration failed: User with this email already exists", "USER_DUPLICATE_EMAIL")))
-                            .then(Mono.defer(() -> authenticateUser(email, password))); // После регистрации аутентифицируем пользователя для получения токенов
+                            ;
                 });
     }
 
@@ -88,7 +82,11 @@ public class AuthService {
                 .body(BodyInserters.fromFormData(credentials))
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {
-                });
+                })
+                .onErrorResume(e ->
+                        Mono.error(new UserEmailOrPasswordException("Login failed: Invalid email or password", "USER_INVALID_EMAIL_OR_PASSWORD")))
+                .doOnSuccess(response -> log.info("Аутентификация успешна. Access Token получен"))
+                .doOnError(error -> log.error("Ошибка аутентификации: {}", error.getMessage()));
     }
 
 
@@ -120,14 +118,14 @@ public class AuthService {
     }
 
     public Mono<String> getAdminAccessToken() {
-        // Запрос на получение токена администратора
+
+        // Запрос на получение токена администратора через client_credentials
         return keycloakWebClient
                 .post()
-                .uri("/realms/master/protocol/openid-connect/token")
-                .body(BodyInserters.fromFormData("client_id", "admin-cli")
-                        .with("username", adminName)  // Замените на имя администратора Keycloak
-                        .with("password", adminPassword)  // Замените на пароль администратора Keycloak
-                        .with("grant_type", "password"))
+                .uri("/realms/alchim/protocol/openid-connect/token")
+                .body(BodyInserters.fromFormData("grant_type", "client_credentials")
+                        .with("client_id", clientId)  // Укажите ваш client_id
+                        .with("client_secret", clientSecret)) // Укажите ваш client_secret
                 .retrieve()
                 .bodyToMono(Map.class)
                 .map(response -> (String) response.get("access_token"));
