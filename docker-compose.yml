@@ -1,4 +1,4 @@
-version: '4.35.1'
+version: '4.34.3'
 
 services:
 
@@ -12,7 +12,7 @@ services:
     restart: always
     container_name: my-webflux-keycloak-app
     ports:
-      - '8083:8082'
+      - '8084:8083'
     networks:
       - local_network
     depends_on:
@@ -20,31 +20,35 @@ services:
 
 
 
+
+
+
   keycloak:
     image: quay.io/keycloak/keycloak:26.0.5
     container_name: keycloak_web
-    command:
-      - "start-dev"
-      - "--import-realm"
+
     environment:
 
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
 
-#    healthcheck:
-##      disable: true
-#      test: ["CMD", "curl", "-f", "http://127.0.0.1:8080/"]
-#      interval: 15s
-#      timeout: 2s
-#      retries: 15
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8283"]
+      interval: 15s
+      timeout: 5s
+      retries: 15
 
+    command:
+      - "start-dev"
+      - "--import-realm"
     volumes:
       - type: bind
         source: ./src/main/resources/keycloak/import/realm-alchim.json
         target: /opt/keycloak/data/import/realm-alchim.json
         read_only: true
     ports:
-      - '8283:8080'  #8080 must be
+      - '8283:8080'
+      #8080 must be
     restart: on-failure
     networks:
       - local_network
