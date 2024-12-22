@@ -19,11 +19,11 @@ public class UserRestControllerV1 {
     private final UserService userService;
 
     @GetMapping("/{id}")
-    public Mono<Map<String, Object>> getUser(@PathVariable String id, @RequestHeader("Authorization") String authHeader) {
-        // Извлекаем access_token из заголовка запроса
+    public Mono<Map<String, Object>> getUserInfoKeycloak(@PathVariable String id, @RequestHeader("Authorization") String authHeader) {
         String accessToken = authHeader.replace("Bearer ", "");
 
-        return userService.getUserInfo(id, accessToken);
+        return userService.getUserInfoFromKeycloak(id, accessToken);
     }
+
 }
 

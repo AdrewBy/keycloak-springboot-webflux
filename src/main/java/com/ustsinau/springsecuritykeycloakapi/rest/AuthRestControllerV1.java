@@ -1,5 +1,6 @@
 package com.ustsinau.springsecuritykeycloakapi.rest;
 
+import com.ustsinau.dto.AuthRequestRegistrationDto;
 import com.ustsinau.springsecuritykeycloakapi.dto.RegisterRequest;
 import com.ustsinau.springsecuritykeycloakapi.exception.ConfirmPasswordException;
 import com.ustsinau.springsecuritykeycloakapi.service.AuthService;
@@ -22,23 +23,38 @@ public class AuthRestControllerV1 {
 
     private final AuthService authService;
 
-    @PostMapping("/registration")
+    @PostMapping("/registration-bd-keycloak")
+    public Mono<ResponseEntity<Map<String, Object>>> register(@RequestBody AuthRequestRegistrationDto request) {
+
+        String email = request.getUser().getEmail();
+        String password = request.getPassword();
+
+        return authService.registerUserInBdAppAndKeycloak(request)
+                .then(Mono.defer(() -> authService.authenticateUserInKeycloak(email, password))) // После регистрации аутентифицируем пользователя для получения токенов
+                .doOnSuccess(response -> log.info("Authentication successful."))
+                .map(response -> {
+                    return ResponseEntity
+                            .status(HttpStatus.CREATED)
+                            .body(getResponseBody(response));
+
+                });
+    }
+
+    // created only for test
+    @PostMapping("/registration-keycloak")
     public Mono<ResponseEntity<Map<String, Object>>> register(@RequestBody RegisterRequest request) {
 
-        // Извлекаем параметры из DTO
         String email = request.getEmail();
         String password = request.getPassword();
         String confirmPassword = request.getConfirmPassword();
 
-        // Проверяем совпадение паролей
         if (!password.equals(confirmPassword)) {
             return Mono.error(new ConfirmPasswordException("Password confirmation does not match", "PASSWORD_NOT_MATCH"));
 
         }
 
-        // Вызываем метод регистрации пользователя в Keycloak
-        return authService.registerUser(email, password)
-                .then(Mono.defer(() -> authService.authenticateUser(email, password))) // После регистрации аутентифицируем пользователя для получения токенов
+        return authService.registerUserInKeycloak(email,password)
+                .then(Mono.defer(() -> authService.authenticateUserInKeycloak(email, password))) // После регистрации аутентифицируем пользователя для получения токенов
                 .doOnSuccess(response -> log.info("Authentication successful."))
                 .map(response -> {
                     return ResponseEntity
@@ -55,7 +71,7 @@ public class AuthRestControllerV1 {
         String password = request.getPassword();
         log.info("Запрос на вход пользователя с email: {}", email);
 
-        return authService.authenticateUser(email, password)
+        return authService.authenticateUserInKeycloak(email, password)
                 .map(response -> {
                     return ResponseEntity
                             .status(HttpStatus.OK)

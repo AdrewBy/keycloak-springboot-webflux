@@ -1,40 +1,4 @@
-server:
-  port: 8083
 
 spring:
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          #docker start
-          issuer-uri: http://keycloak:8080/realms/alchim
-          jwk-set-uri: http://keycloak:8080/realms/alchim/protocol/openid-connect/certs
-
-      #local start
-      #       issuer-uri: http://localhost:8283/realms/alchim
-      #        jwk-set-uri: http://localhost:8283/realms/alchim/protocol/openid-connect/certs
-      client:
-        provider:
-          keycloak:
-            #           issuer-uri: http://localhost:8283/realms/alchim
-            issuer-uri: http://keycloak:8080/realms/alchim
-
-            user-name-attribute: preferred_username
-
-        registration:
-          keycloak:
-            client-id: reactive-springsecurity-client  #resource
-            client-secret: ${REALM_ALCHIM_CLIENT_SECRET}
-
-            scope:
-              - openid
-              - profile
-              - email
-
-
-
-logging:
-  level:
-    org.springframework.web: DEBUG
-    org.springframework.security: DEBUG
-    org.springframework.boot.web.servlet.filter: DEBUG
+  profiles:
+    active: docker

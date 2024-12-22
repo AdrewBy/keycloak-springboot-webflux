@@ -1,43 +1,27 @@
-version: '4.34.3'
-
 services:
 
-  client-backend:
-    image: spring-security-keycloak-api:1.0.0
+  orchestrator:
+    image: spring-security-keycloak-api:2.0.0
     env_file:
       - docker-back.env
     build:
       context: .
       dockerfile: Dockerfile
     restart: always
-    container_name: my-webflux-keycloak-app
+    container_name: my-orchestrator-webflux-keycloak-app
     ports:
       - '8084:8083'
     networks:
-      - local_network
+      - app_network
     depends_on:
       - keycloak
-
-
-
-
-
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.0.5
     container_name: keycloak_web
-
     environment:
-
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
-
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8283"]
-      interval: 15s
-      timeout: 5s
-      retries: 15
-
     command:
       - "start-dev"
       - "--import-realm"
@@ -49,33 +33,59 @@ services:
     ports:
       - '8283:8080'
       #8080 must be
-    restart: on-failure
+    restart: always
     networks:
-      - local_network
+      - app_network
+
+  client-backend-db:
+    image: individual-api-web-jpa:1.0.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    container_name: my-web-app-jpa-db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/postgresIndividualApi
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+
+    ports:
+      - '8088:8088'
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - app_network
+
+
+  postgres-db:
+    container_name: postgres-db
+    image: postgres:17
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgresIndividualApi"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgresIndividualApi
+      PGDATA: /var/lib/postgresql/data
+
 
 networks:
-  local_network:
+  app_network:
     driver: bridge
 
-
-
-#  postgres:
-#    image: docker.io/bitnami/postgresql:16.4.0
-#    volumes:
-#      - postgres_data:/var/lib/postgresql/data
-#    environment:
-#      POSTGRES_DB: keycloak
-#      POSTGRES_USER: keycloak
-#      POSTGRES_PASSWORD: password
-#    healthcheck:
-#      test: [ "CMD-SHELL", "pg_isready", "-d", "db_prod" ]
-#      interval: 30s
-#      timeout: 60s
-#      retries: 5
-#      start_period: 80s
-
-#    depends_on:
-#      - postgres
+volumes:
+  postgres_data:
 
 #volumes:
 #  postgres_data:

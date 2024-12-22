@@ -1,3 +1,5 @@
+server:
+  port: 8083
 
 spring:
 
@@ -10,7 +12,7 @@ spring:
       client:
         provider:
           keycloak:
-            issuer-uri:  http://localhost:8283/realms/alchim
+            issuer-uri: http://localhost:8283/realms/alchim
             user-name-attribute: preferred_username
         registration:
           keycloak:

@@ -16,7 +16,7 @@ VOLUME /tmp
 # Со временем у проекта будет изменяться версия, и чтобы не изменять всякий раз
 # этот Dockerfile имя jar-файла вынесем в аргумент. Альтернативно можно указать
 # постоянное имя jar-файла в Maven при помощи finalName.
-ARG JAR_FILE=spring-security-keycloak-api-1.0.0.jar
+ARG JAR_FILE=spring-security-keycloak-api-2.0.0.jar
 
 WORKDIR /application
 
