@@ -3,15 +3,21 @@ package com.ustsinau.springsecuritykeycloakapi.it;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.ustsinau.dto.AuthRequestRegistrationDto;
+import com.ustsinau.dto.IndividualDto;
 import com.ustsinau.springsecuritykeycloakapi.config.MyKeycloakContainerConfig;
 import com.ustsinau.springsecuritykeycloakapi.dto.RegisterRequest;
 import com.ustsinau.springsecuritykeycloakapi.service.AuthService;
+import com.ustsinau.springsecuritykeycloakapi.service.webclient.WebClientBdService;
 import com.ustsinau.springsecuritykeycloakapi.service.webclient.WebClientKeycloakService;
+import com.ustsinau.springsecuritykeycloakapi.utils.JsonUtils;
 import org.junit.jupiter.api.*;
+import org.mockito.BDDMockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -24,13 +30,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.mockito.ArgumentMatchers.any;
+
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
         ,classes = MyKeycloakContainerConfig.class)
 @AutoConfigureWebTestClient
 @ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
-public class ItRestControllerV1Tests {
+public class ItAuthRestControllerV1Tests {
 
     @Autowired
     private WebTestClient webTestClient;
@@ -44,9 +52,13 @@ public class ItRestControllerV1Tests {
     @Autowired
     private WebClientKeycloakService webClientKeycloakService;
 
+    @MockBean
+    private WebClientBdService webClientBdService;
+
 
     @BeforeEach
     public void deleteAllUsers() {
+
         String adminToken = webClientKeycloakService.getAdminAccessToken().block();
         // Получаем список всех пользователей
         List<String> userIds = keycloakWebClient.get()
@@ -70,21 +82,22 @@ public class ItRestControllerV1Tests {
     }
 
     @Test
-    @DisplayName("Test created user functionality")
-    public void givenUser_whenRegisterUser_thenSuccessResponse() {
+    @DisplayName("Test registration user bd-keycloak functionality")
+    public void givenUser_whenRegisterBdAndKeycloakUser_thenSuccessResponse() {
 
-        // Создаем объект запроса для регистрации
-        RegisterRequest request = new RegisterRequest();
-        request.setEmail("john.doe@mail.com");
-        request.setPassword("password123");
-        request.setConfirmPassword("password123");
+        AuthRequestRegistrationDto authDto = JsonUtils.readJsonFromFile("src/test/resources/json/authDto.json", AuthRequestRegistrationDto.class);
+        IndividualDto individualDto = JsonUtils.readJsonFromFile("src/test/resources/json/individualDto.json", IndividualDto.class);
+
+
+        BDDMockito.given(webClientBdService.registerUserInBd(any(AuthRequestRegistrationDto.class)))
+                .willReturn(Mono.just(individualDto));
 
         // Когда
         WebTestClient.ResponseSpec result = webTestClient
                 .post()
-                .uri("/api/v1/auth/registration-keycloak")
+                .uri("/api/v1/auth/registration")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(request), RegisterRequest.class)
+                .body(Mono.just(authDto), AuthRequestRegistrationDto.class)
                 .exchange();
 
         // Тогда
@@ -194,4 +207,6 @@ public class ItRestControllerV1Tests {
         DecodedJWT jwt = JWT.decode(token);
         return jwt.getSubject(); // Получаем значение sub
     }
+
+
 }

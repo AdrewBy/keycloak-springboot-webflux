@@ -2,7 +2,6 @@ package com.ustsinau.springsecuritykeycloakapi.rest;
 
 import com.ustsinau.dto.AuthRequestRegistrationDto;
 import com.ustsinau.springsecuritykeycloakapi.dto.RegisterRequest;
-import com.ustsinau.springsecuritykeycloakapi.exception.ConfirmPasswordException;
 import com.ustsinau.springsecuritykeycloakapi.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,37 +22,13 @@ public class AuthRestControllerV1 {
 
     private final AuthService authService;
 
-    @PostMapping("/registration-bd-keycloak")
+    @PostMapping("/registration")
     public Mono<ResponseEntity<Map<String, Object>>> register(@RequestBody AuthRequestRegistrationDto request) {
 
         String email = request.getUser().getEmail();
         String password = request.getPassword();
 
         return authService.registerUserInBdAppAndKeycloak(request)
-                .then(Mono.defer(() -> authService.authenticateUserInKeycloak(email, password))) // После регистрации аутентифицируем пользователя для получения токенов
-                .doOnSuccess(response -> log.info("Authentication successful."))
-                .map(response -> {
-                    return ResponseEntity
-                            .status(HttpStatus.CREATED)
-                            .body(getResponseBody(response));
-
-                });
-    }
-
-    // created only for test
-    @PostMapping("/registration-keycloak")
-    public Mono<ResponseEntity<Map<String, Object>>> register(@RequestBody RegisterRequest request) {
-
-        String email = request.getEmail();
-        String password = request.getPassword();
-        String confirmPassword = request.getConfirmPassword();
-
-        if (!password.equals(confirmPassword)) {
-            return Mono.error(new ConfirmPasswordException("Password confirmation does not match", "PASSWORD_NOT_MATCH"));
-
-        }
-
-        return authService.registerUserInKeycloak(email,password)
                 .then(Mono.defer(() -> authService.authenticateUserInKeycloak(email, password))) // После регистрации аутентифицируем пользователя для получения токенов
                 .doOnSuccess(response -> log.info("Authentication successful."))
                 .map(response -> {

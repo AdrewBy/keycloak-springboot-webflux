@@ -19,8 +19,9 @@ public class IndividualsRestControllerV1 {
     private final IndividualBdService individualBdService;
 
     @GetMapping("/{id}")
-    public Mono<IndividualDto> getIndividualById(@PathVariable String id) {
-        return individualBdService.getIndividualById(id);
+    public Mono<IndividualDto> getIndividualById(@PathVariable String id, @RequestHeader("Authorization") String authHeader) {
+        String accessToken = authHeader.replace("Bearer ", "");
+        return individualBdService.getIndividualById(id, accessToken);
     }
 
     @PostMapping

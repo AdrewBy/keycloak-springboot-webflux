@@ -1,0 +1,25 @@
+{
+  "passportNumber": "bm123123",
+  "phoneNumber": "+13123123",
+  "password": "Password",
+  "confirmPassword": "Password",
+  "user": {
+    "email": "user3@example.com",
+    "secretKey": "password123",
+    "firstName": "John",
+    "lastName": "Doe",
+    "filled": true,
+    "address": {
+      "address": "123 Main St",
+      "zipCode": "12345",
+      "city": "Los Angeles",
+      "state": "California",
+      "country": {
+        "name": "United States",
+        "alpha2": "US",
+        "alpha3": "USA",
+        "status": "ACTIVE"
+      }
+    }
+  }
+}

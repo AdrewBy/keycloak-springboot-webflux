@@ -31,10 +31,11 @@ public class WebClientBdService {
                 .doOnError(error -> log.error("Failed to register user in the BD service", error));
     }
 
-    public Mono<IndividualDto> getIndividualById(String userId) {
+    public Mono<IndividualDto> getIndividualById(String userId, String accessToken) {
 
         return webClientDB.get()
                 .uri("/api/v1/individuals/" + userId)
+                .headers(headers -> headers.setBearerAuth(accessToken))
                 .retrieve()
                 .bodyToMono(IndividualDto.class) // Преобразуем ответ в DTO
                 .doOnSuccess(response -> log.info("Individual is successfully gotten from the BD: {}", response))

@@ -17,8 +17,10 @@ public class IndividualBdService {
     private final WebClientBdService webClientBdService;
 
 
-    public Mono<IndividualDto> getIndividualById(String userId) {
-        return webClientBdService.getIndividualById(userId);
+    public Mono<IndividualDto> getIndividualById(String userId, String accessToken) {
+
+
+        return webClientBdService.getIndividualById(userId, accessToken);
     }
 
     public Mono<IndividualDto> updateIndividual(IndividualDto request) {
