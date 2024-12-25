@@ -2,11 +2,6 @@ server:
   port: 8083
 
 spring:
-#  datasource:
-#    url: jdbc:postgresql://postgres-db:5432/postgresIndividualApi
-#    username: postgres
-#    password: postgres
-#    driver-class-name: org.postgresql.Driver
 
   security:
     oauth2:

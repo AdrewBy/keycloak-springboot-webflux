@@ -36,7 +36,8 @@ public class AuthService {
                 .flatMap(userId -> registerUserInKeycloak(email, password) // Шаг 2: Регистрируем в Keycloak
                         .onErrorResume(error -> { // Если ошибка в Keycloak
                             log.error("Error registering user in Keycloak, rolling back user in DB", error);
-                            return webClientBdService.hardDeleteIndividualInBd(userId.getId())
+                            String token = String.valueOf(webClientKeycloakService.getAdminAccessToken());
+                            return webClientBdService.hardDeleteIndividualInBd(userId.getId(), token)
                                     .then(Mono.error(error)); // Пробрасываем ошибку дальше
                         })
                 )

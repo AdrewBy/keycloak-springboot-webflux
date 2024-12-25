@@ -128,7 +128,6 @@ public class WebClientKeycloakService {
     }
 
     public Mono<Map<String, String>> refreshToken(String refreshToken) {
-        // Логирование запроса
         log.info("Начинаем процесс обновления токена с refreshToken: {}", refreshToken);
 
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
@@ -144,11 +143,9 @@ public class WebClientKeycloakService {
                 .bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {
                 })
                 .doOnSuccess(response -> {
-                    // Логируем успешный ответ
                     log.info("Токен успешно обновлен, получен новый токен: {}", response.get("access_token"));
                 })
                 .doOnError(error -> {
-                    // Логируем ошибку, если что-то пошло не так
                     log.error("Ошибка при обновлении токена: {}", error.getMessage());
                 });
     }

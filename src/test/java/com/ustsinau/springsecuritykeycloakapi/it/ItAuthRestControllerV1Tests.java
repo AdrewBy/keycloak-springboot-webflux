@@ -144,7 +144,7 @@ public class ItAuthRestControllerV1Tests {
     public void givenValidRefreshToken_whenRefreshToken_thenSuccessResponse() {
 
         authService.registerUserInKeycloak("john.doe@mail.com", "password123").block();
-        // Получаем refresh_token для зарегистрированного пользователя
+
         String refreshToken = authService.authenticateUserInKeycloak("john.doe@mail.com", "password123")
                 .map(resp -> resp.get("refresh_token"))
                 .block();

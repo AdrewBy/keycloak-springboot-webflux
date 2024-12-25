@@ -1,0 +1,38 @@
+{
+  "id": "bf52c694-e182-4725-ad23-398c1b3ece22",
+  "user": {
+    "id": "4cf00cc9-9e06-49bf-b78b-ef8a9bf5a0b2",
+    "secretKey": "password123",
+    "email": "user2@example.com",
+    "created": "2024-12-23T14:41:27.322837",
+    "updated": "2024-12-23T14:41:27.322871",
+    "firstName": "John",
+    "lastName": "Doe",
+    "filled": true,
+    "address": {
+      "id": "825fa764-ce1e-4312-b3f7-0b23a650ccd3",
+      "created": "2024-12-23T14:41:27.307118",
+      "updated": "2024-12-23T14:41:27.307141",
+      "address": "1231 Main St",
+      "zipCode": "12345",
+      "archived": "2024-12-23T14:41:27.307152",
+      "city": "Los Angeles",
+      "state": "California",
+      "country": {
+        "id": 3,
+        "created": "2024-12-23T14:41:27.29218",
+        "updated": "2024-12-23T14:41:27.292216",
+        "name": "United States",
+        "alpha2": "US",
+        "alpha3": "USA",
+        "status": "ACTIVE"
+      }
+    }
+  },
+  "passportNumber": "bm123123",
+  "phoneNumber": "+13123123",
+  "email": "user3@example.com",
+  "verifiedAt": "2024-12-23T14:41:27.341172",
+  "archivedAt": "2024-12-23T14:41:27.341201",
+  "status": "ACTIVE"
+}

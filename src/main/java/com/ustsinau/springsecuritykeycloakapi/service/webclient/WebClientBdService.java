@@ -42,10 +42,11 @@ public class WebClientBdService {
                 .doOnError(error -> log.error("Failed to get individual from the BD ", error));
     }
 
-    public Mono<IndividualDto> updateIndividual(IndividualDto request) {
+    public Mono<IndividualDto> updateIndividual(IndividualDto request, String accessToken) {
 
         return webClientDB.post()
                 .uri("/api/v1/individuals")
+                .headers(headers -> headers.setBearerAuth(accessToken))
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .retrieve()
@@ -54,33 +55,36 @@ public class WebClientBdService {
                 .doOnError(error -> log.error("Failed to update individual in the BD", error));
     }
 
-    public Mono<Void> hardDeleteIndividualInBd(String id) {
+    public Mono<Void> hardDeleteIndividualInBd(String id, String accessToken) {
 
         return webClientDB.delete()
                 .uri("/api/v1/individuals/hard-delete/" + id)
+                .headers(headers -> headers.setBearerAuth(accessToken))
                 .retrieve()
                 .bodyToMono(Void.class)
                 .doOnSuccess(response -> log.info("Individual successfully deleted in the BD service: {}", response));
 
     }
 
-    public Mono<IndividualDto> softDeleteIndividualById(String id) {
+    public Mono<IndividualDto> softDeleteIndividualById(String id, String accessToken) {
 
         return webClientDB.delete()
                 .uri("/api/v1/individuals/soft-delete/" + id)
+                .headers(headers -> headers.setBearerAuth(accessToken))
                 .retrieve()
                 .bodyToMono(IndividualDto.class)
                 .doOnSuccess(response -> log.info("Individual successfully soft-deleted in the BD: {}", response))
                 .doOnError(error -> log.error("Failed to soft-deleted individual in the BD", error));
     }
 
-    public Mono<PaginatedResponseDto<IndividualDto>> getAll(int page, int size) {
+    public Mono<PaginatedResponseDto<IndividualDto>> getAll(int page, int size, String accessToken) {
         return webClientDB.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/api/v1/individuals")
                         .queryParam("page", page)
                         .queryParam("size", size)
                         .build())
+                .headers(headers -> headers.setBearerAuth(accessToken))
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<PaginatedResponseDto<IndividualDto>>() {})
                 .doOnSuccess(response -> log.info("Individual is successfully gotten from the BD: {}"))

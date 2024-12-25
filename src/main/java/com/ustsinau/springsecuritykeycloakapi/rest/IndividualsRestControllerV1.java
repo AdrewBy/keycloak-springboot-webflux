@@ -19,31 +19,49 @@ public class IndividualsRestControllerV1 {
     private final IndividualBdService individualBdService;
 
     @GetMapping("/{id}")
-    public Mono<IndividualDto> getIndividualById(@PathVariable String id, @RequestHeader("Authorization") String authHeader) {
+    public Mono<IndividualDto> getIndividualById(
+            @PathVariable String id,
+            @RequestHeader("Authorization") String authHeader) {
+
         String accessToken = authHeader.replace("Bearer ", "");
         return individualBdService.getIndividualById(id, accessToken);
     }
 
     @PostMapping
-    public Mono<IndividualDto> updateIndividual(@RequestBody IndividualDto request) {
-        return individualBdService.updateIndividual(request);
+    public Mono<IndividualDto> updateIndividual(
+            @RequestBody IndividualDto request,
+            @RequestHeader("Authorization") String authHeader) {
+
+        String accessToken = authHeader.replace("Bearer ", "");
+        return individualBdService.updateIndividual(request, accessToken);
     }
 
     @DeleteMapping("/hard-delete/{id}")
-    public Mono<Void> deleteHardIndividual(@PathVariable String id) {
-        return individualBdService.deleteHardIndividual(id);
+    public Mono<Void> deleteHardIndividual(
+            @PathVariable String id,
+            @RequestHeader("Authorization") String authHeader) {
+
+        String accessToken = authHeader.replace("Bearer ", "");
+        return individualBdService.deleteHardIndividual(id, accessToken);
     }
 
     @DeleteMapping("/soft-delete/{id}")
-    public Mono<IndividualDto> deleteSoftIndividual(@PathVariable String id) {
-        return individualBdService.deleteSoftIndividualById(id);
+    public Mono<IndividualDto> deleteSoftIndividual(
+            @PathVariable String id,
+            @RequestHeader("Authorization") String authHeader) {
+
+        String accessToken = authHeader.replace("Bearer ", "");
+        return individualBdService.deleteSoftIndividualById(id, accessToken);
     }
 
     @GetMapping
     public Mono<PaginatedResponseDto<IndividualDto>> getAllIndividuals(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size) {
-        return individualBdService.getAllIndividuals(page, size);
+            @RequestParam(defaultValue = "50") int size,
+            @RequestHeader("Authorization") String authHeader) {
+
+        String accessToken = authHeader.replace("Bearer ", "");
+        return individualBdService.getAllIndividuals(page, size, accessToken);
     }
 
 }
