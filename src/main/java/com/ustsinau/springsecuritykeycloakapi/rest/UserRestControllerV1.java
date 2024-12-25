@@ -20,9 +20,9 @@ public class UserRestControllerV1 {
 
     @GetMapping("/{id}")
     public Mono<Map<String, Object>> getUserInfoKeycloak(@PathVariable String id, @RequestHeader("Authorization") String authHeader) {
-        String accessToken = authHeader.replace("Bearer ", "");
+        String adminAccessToken = authHeader.replace("Bearer ", "");
 
-        return userService.getUserInfoFromKeycloak(id, accessToken);
+        return userService.getUserInfoFromKeycloak(id, adminAccessToken);
     }
 
 }

@@ -34,7 +34,7 @@ public class MyKeycloakContainerConfig {
 
 
         // Установка порта, на котором будет доступен Keycloak
-        keycloak.setPortBindings(List.of("8283:8080"));
+        keycloak.setPortBindings(List.of("8883:8080"));
         return keycloak;
     }
 }

@@ -5,12 +5,12 @@ spring:
     oauth2:
       resource server:
         jwt:
-          issuer-uri: http://localhost:8283/realms/alchim
-          jwk-set-uri: http://localhost:8283/realms/alchim/protocol/openid-connect/certs
+          issuer-uri: http://localhost:8883/realms/alchim
+          jwk-set-uri: http://localhost:8883/realms/alchim/protocol/openid-connect/certs
       client:
         provider:
           keycloak:
-            issuer-uri:  http://localhost:8283/realms/alchim
+            issuer-uri:  http://localhost:8883/realms/alchim
             user-name-attribute: preferred_username
         registration:
           keycloak:

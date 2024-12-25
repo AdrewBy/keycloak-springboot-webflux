@@ -4,13 +4,20 @@ package com.ustsinau.springsecuritykeycloakapi.service.webclient;
 import com.ustsinau.dto.AuthRequestRegistrationDto;
 import com.ustsinau.dto.IndividualDto;
 import com.ustsinau.dto.PaginatedResponseDto;
+import com.ustsinau.springsecuritykeycloakapi.exception.UserWithEmailAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -28,7 +35,13 @@ public class WebClientBdService {
                 .retrieve()
                 .bodyToMono(IndividualDto.class) // Преобразуем ответ в DTO
                 .doOnSuccess(response -> log.info("User successfully registered in the BD service: {}", response))
-                .doOnError(error -> log.error("Failed to register user in the BD service", error));
+                .doOnError(error -> log.error("Failed to register user in the BD service", error))
+                .onErrorResume(WebClientResponseException.class, ex -> {
+                    if (ex.getStatusCode() == HttpStatus.CONFLICT) {
+                        return Mono.error(new UserWithEmailAlreadyExistsException("User already exists in BD with this email","DUPLICATE_EMAIL"));
+                    }
+                    return Mono.error(ex);
+                });
     }
 
     public Mono<IndividualDto> getIndividualById(String userId, String accessToken) {
@@ -37,7 +50,7 @@ public class WebClientBdService {
                 .uri("/api/v1/individuals/" + userId)
                 .headers(headers -> headers.setBearerAuth(accessToken))
                 .retrieve()
-                .bodyToMono(IndividualDto.class) // Преобразуем ответ в DTO
+                .bodyToMono(IndividualDto.class)
                 .doOnSuccess(response -> log.info("Individual is successfully gotten from the BD: {}", response))
                 .doOnError(error -> log.error("Failed to get individual from the BD ", error));
     }
@@ -62,7 +75,7 @@ public class WebClientBdService {
                 .headers(headers -> headers.setBearerAuth(accessToken))
                 .retrieve()
                 .bodyToMono(Void.class)
-                .doOnSuccess(response -> log.info("Individual successfully deleted in the BD service: {}", response));
+                .doOnSuccess(response -> log.info("Individual successfully deleted in the BD service."));
 
     }
 
@@ -87,7 +100,7 @@ public class WebClientBdService {
                 .headers(headers -> headers.setBearerAuth(accessToken))
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<PaginatedResponseDto<IndividualDto>>() {})
-                .doOnSuccess(response -> log.info("Individual is successfully gotten from the BD: {}"))
+                .doOnSuccess(response -> log.info("Individual is successfully gotten from the BD"))
                 .doOnError(error -> log.error("Failed to get individual from the BD ", error));
     }
 

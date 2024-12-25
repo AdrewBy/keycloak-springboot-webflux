@@ -15,9 +15,9 @@ public class UserService {
 
     private final WebClientKeycloakService webClientKeycloakService;
 
-    public Mono<Map<String, Object>> getUserInfoFromKeycloak(String userId, String accessToken) {
+    public Mono<Map<String, Object>> getUserInfoFromKeycloak(String userId, String adminAccessToken) {
 
-        return webClientKeycloakService.getUserInfoFromKeycloak(userId, accessToken);
+        return webClientKeycloakService.getUserInfoFromKeycloak(userId, adminAccessToken);
     }
 
 

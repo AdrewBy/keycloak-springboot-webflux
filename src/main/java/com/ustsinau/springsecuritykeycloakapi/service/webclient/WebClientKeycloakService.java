@@ -34,20 +34,20 @@ public class WebClientKeycloakService {
     private final WebClient keycloakWebClient;
 
 
-    public Mono<Map<String, Object>> getUserInfoFromKeycloak(String userId, String accessToken) {
-        log.info("Запрашиваем информацию о пользователе с ID: {} с использованием accessToken", userId);
+    public Mono<Map<String, Object>> getUserInfoFromKeycloak(String userId, String adminAccessToken) {
+        log.info("Запрашиваем информацию о пользователе с ID: {} с использованием adminAccessToken", userId);
 
         // Основной запрос для получения базовой информации о пользователе
         Mono<Map<String, Object>> userDetails = keycloakWebClient.get()
                 .uri("/admin/realms/alchim/users/{id}", userId)
-                .headers(headers -> headers.setBearerAuth(accessToken))
+                .headers(headers -> headers.setBearerAuth(adminAccessToken))
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<>() {});
 
         // Дополнительный запрос для получения ролей
         Mono<List<String>> userRoles = keycloakWebClient.get()
                 .uri("/admin/realms/alchim/users/{id}/role-mappings/realm", userId)
-                .headers(headers -> headers.setBearerAuth(accessToken))
+                .headers(headers -> headers.setBearerAuth(adminAccessToken))
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
                 .map(roles -> roles.stream()

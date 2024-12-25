@@ -7,6 +7,7 @@ import com.ustsinau.dto.AuthRequestRegistrationDto;
 import com.ustsinau.dto.IndividualDto;
 import com.ustsinau.springsecuritykeycloakapi.config.MyKeycloakContainerConfig;
 import com.ustsinau.springsecuritykeycloakapi.dto.RegisterRequest;
+import com.ustsinau.springsecuritykeycloakapi.exception.UserWithEmailAlreadyExistsException;
 import com.ustsinau.springsecuritykeycloakapi.service.AuthService;
 import com.ustsinau.springsecuritykeycloakapi.service.webclient.WebClientBdService;
 import com.ustsinau.springsecuritykeycloakapi.service.webclient.WebClientKeycloakService;
@@ -18,10 +19,13 @@ import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWeb
 import org.springframework.boot.test.context.SpringBootTest;
 
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.core.publisher.Mono;
 
@@ -34,7 +38,7 @@ import static org.mockito.ArgumentMatchers.any;
 
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
-        ,classes = MyKeycloakContainerConfig.class)
+        , classes = MyKeycloakContainerConfig.class)
 @AutoConfigureWebTestClient
 @ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
@@ -83,7 +87,7 @@ public class ItAuthRestControllerV1Tests {
 
     @Test
     @DisplayName("Test registration user bd-keycloak functionality")
-    public void givenUser_whenRegisterBdAndKeycloakUser_thenSuccessResponse() {
+    public void givenUser_whenRegisterBdAndKeycloak_thenSuccessResponse() {
 
         AuthRequestRegistrationDto authDto = JsonUtils.readJsonFromFile("src/test/resources/json/authDto.json", AuthRequestRegistrationDto.class);
         IndividualDto individualDto = JsonUtils.readJsonFromFile("src/test/resources/json/individualDto.json", IndividualDto.class);
@@ -108,6 +112,35 @@ public class ItAuthRestControllerV1Tests {
                 .jsonPath("$.expires_in").isEqualTo(3600)
                 .jsonPath("$.refresh_token").isNotEmpty()
                 .jsonPath("$.token_type").isEqualTo("Bearer");
+    }
+
+    @Test
+    @DisplayName("Test registration user bd-keycloak with duplicated email functionality")
+    public void givenUser_whenRegisterBdAndKeycloakWithDuplicatedEmail_thenExceptionIsThrown() {
+
+        AuthRequestRegistrationDto authDto = JsonUtils.readJsonFromFile("src/test/resources/json/authDto.json", AuthRequestRegistrationDto.class);
+
+        BDDMockito.given(webClientBdService.registerUserInBd(any(AuthRequestRegistrationDto.class)))
+                .willReturn(Mono.error(
+                        new UserWithEmailAlreadyExistsException(
+                                "User already exists in BD with this email",
+                                "DUPLICATE_EMAIL")
+                ));
+
+        // Когда
+        WebTestClient.ResponseSpec result = webTestClient
+                .post()
+                .uri("/api/v1/auth/registration")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(authDto), AuthRequestRegistrationDto.class)
+                .exchange();
+
+        // Тогда
+        result.expectStatus().isEqualTo(409)
+                .expectBody()
+                .consumeWith(System.out::println)
+                .jsonPath("$.errors[0].code").isEqualTo("DUPLICATE_EMAIL")
+                .jsonPath("$.errors[0].message").isEqualTo("User already exists in BD with this email");
     }
 
     @Test
@@ -137,6 +170,33 @@ public class ItAuthRestControllerV1Tests {
                 .jsonPath("$.expires_in").isEqualTo(3600)
                 .jsonPath("$.refresh_token").isNotEmpty()
                 .jsonPath("$.token_type").isEqualTo("Bearer");
+    }
+
+    @Test
+    @DisplayName("Test user login with incorrect password functionality")
+    public void givenValidLoginRequest_whenInvalidPassword_thenExceptionIsThrown() {
+
+        authService.registerUserInKeycloak("john.doe@mail.com", "password123").block();
+
+        // Создаем объект запроса для логина
+        RegisterRequest request = new RegisterRequest();
+        request.setEmail("john.doe@mail.com");
+        request.setPassword("wrongPassword");
+
+        // Когда
+        WebTestClient.ResponseSpec result = webTestClient
+                .post()
+                .uri("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(request), RegisterRequest.class)
+                .exchange();
+
+        // Тогда
+        result.expectStatus().isEqualTo(401)
+                .expectBody()
+                .consumeWith(System.out::println)
+                .jsonPath("$.errors[0].code").isEqualTo("USER_INVALID_EMAIL_OR_PASSWORD")
+                .jsonPath("$.errors[0].message").isEqualTo("Login failed: Invalid email or password");
     }
 
     @Test
@@ -177,25 +237,21 @@ public class ItAuthRestControllerV1Tests {
 
         authService.registerUserInKeycloak("john.doe@mail.com", "password123").block();
 
-        // Аутентификация и получение токена
         String token = authService.authenticateUserInKeycloak("john.doe@mail.com", "password123")
-                .map(getToken->getToken.get("access_token"))
+                .map(getToken -> getToken.get("access_token"))
                 .block().toString();
 
         // Извлечение sub из токена
         String userId = extractSubFromToken(token);
 
-        String accessToken = webClientKeycloakService.getAdminAccessToken().block();
+        String adminAccessToken = webClientKeycloakService.getAdminAccessToken().block();
 
-        // Запрос информации о пользователе
         WebTestClient.ResponseSpec getResult = webTestClient
                 .get()
                 .uri("/api/v1/users/{id}", userId)
-                .header("Authorization", "Bearer " + accessToken)
+                .header("Authorization", "Bearer " + adminAccessToken)
                 .exchange();
 
-
-        // Проверяем, что статус ответа успешный и данные о пользователе верны
         getResult.expectStatus().isOk()
                 .expectBody()
                 .consumeWith(System.out::println)
